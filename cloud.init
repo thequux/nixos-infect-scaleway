@@ -1,0 +1,20 @@
+#cloud-config
+write_files:
+- path: /etc/nixos/host.nix
+  permissions: '0644'
+  content: |
+    {pkgs, ...}:
+    {
+      imports = [
+        ./scaleway.nix
+        ./hardening.nix
+      ];
+
+      boot.scaleway = true;
+      environment.systemPackages = with pkgs; [ neofetch vim ];
+    }
+runcmd:
+  - mkdir -p /run/nixos-cloud-init /etc/nixos
+  - curl -L https://github.com/thequux/nixos-infect-scaleway/archive/master.tar.gz |tar -xz --strip-components=1 -C /run/nixos-cloud-init
+  - cp -R /run/nixos-cloud-init/nixos/* /etc/nixos
+  - curl https://raw.githubusercontent.com/elitak/nixos-infect/master/nixos-infect |  NIXOS_IMPORT=./host.nix NIX_CHANNEL=nixos-20.09 bash 2>&1 | tee /tmp/infect.log
